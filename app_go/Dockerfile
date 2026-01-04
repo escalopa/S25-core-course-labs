@@ -1,32 +1,47 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.21-alpine3.19 AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy go mod files
-COPY go.mod go.sum* ./
+# Install build dependencies
+# hadolint ignore=DL3018
+RUN apk add --no-cache git ca-certificates
+
+# Copy go mod files first for better layer caching
+COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy source code
-COPY . .
+# Copy only necessary source files
+COPY main.go template_funcs.go ./
+COPY templates ./templates
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+# Build the application as static binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -a -installsuffix cgo \
+    -ldflags '-extldflags "-static" -s -w' \
+    -o main .
 
 # Runtime stage
-FROM alpine:latest
+FROM alpine:3.19
 
-# Install ca-certificates for HTTPS
-RUN apk --no-cache add ca-certificates
+# Install ca-certificates and wget for health checks
+# hadolint ignore=DL3018
+RUN apk --no-cache add ca-certificates wget && \
+    addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
 
-WORKDIR /root/
+# Set working directory
+WORKDIR /app
 
-# Copy the binary from builder
-COPY --from=builder /app/main .
-COPY --from=builder /app/templates ./templates
+# Copy the binary and templates from builder
+COPY --from=builder --chown=appuser:appuser /app/main .
+COPY --from=builder --chown=appuser:appuser /app/templates ./templates
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8080

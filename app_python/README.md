@@ -2,29 +2,26 @@
 
 ## Overview
 
-FastAPI web application displaying current Moscow (MSK) timezone. Features a modern, responsive Bootstrap UI that updates on page refresh.
+FastAPI web application displaying current Moscow (MSK) timezone with modern Bootstrap UI.
 
 ## Features
 
 - Real-time Moscow timezone display
 - Responsive Bootstrap 5 UI
 - Health check endpoint
-- Docker containerization
+- Docker containerization with non-root user
 
 ## Technology Stack
 
-- **Framework**: FastAPI 0.109.0
-- **Server**: Uvicorn
-- **Templating**: Jinja2
-- **Frontend**: Bootstrap 5
-- **Python**: 3.11+
+- FastAPI 0.109.0, Uvicorn, Jinja2
+- Bootstrap 5, Python 3.11+
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
+### Using Docker Compose
 
 ```bash
-docker compose up
+make compose-up
 ```
 
 Access at: <http://localhost:5000>
@@ -39,28 +36,58 @@ pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 5000
 ```
 
-### Docker Only
+## Docker
+
+### Build
 
 ```bash
-docker build -t moscow-time-app .
-docker run -p 5000:5000 moscow-time-app
+# Standard Alpine image
+make build-python
+
+# Distroless image
+make build-distroless-python
 ```
+
+### Pull from Docker Hub
+
+```bash
+make pull-python
+```
+
+### Run
+
+```bash
+# Standard image
+make run-python
+
+# Distroless image
+make run-distroless-python
+```
+
+### Compare Sizes
+
+```bash
+make compare-sizes
+```
+
+This shows both regular and distroless image sizes.
+
+### Image Comparison
+
+Image Type | Size | Security | Use Case
+--- | --- | --- | ---
+Alpine | ~60MB | Good | Development, debugging
+Distroless | ~45MB | Excellent | Production
+
+See [DOCKER.md](./DOCKER.md) for best practices details.
 
 ## API Endpoints
 
 - **GET /** - Main page displaying Moscow time
-- **GET /health** - Health check endpoint
-
-```json
-{
-  "status": "healthy",
-  "service": "moscow-time-app"
-}
-```
+- **GET /health** - Health check
 
 ## Testing
 
-1. Visit <http://localhost:5000>
-2. Verify Moscow time is displayed
-3. Refresh to see time update
-4. Check health: `curl http://localhost:5000/health`
+```bash
+make test
+```

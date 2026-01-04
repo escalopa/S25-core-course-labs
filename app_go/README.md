@@ -2,31 +2,27 @@
 
 ## Overview
 
-Interactive Wordle game built with Go's standard library. Players have 6 attempts to guess a randomly selected 5-letter word. Features modern Bootstrap UI with CSS animations and thread-safe session management.
+Interactive Wordle game with 6 attempts to guess a 5-letter word. Features Bootstrap UI with animations and thread-safe session management.
 
 ## Features
 
-- Full Wordle game implementation with proper algorithm
-- Bootstrap 5 UI with smooth animations
+- Full Wordle game implementation
+- Bootstrap 5 UI with CSS animations
 - Color-coded feedback (green, yellow, gray)
-- Unique word per game session
 - Thread-safe concurrent access
 - Health check endpoint
 
 ## Technology Stack
 
-- **Language**: Go 1.21
-- **Web Server**: net/http (standard library)
-- **Templating**: html/template
-- **Frontend**: Bootstrap 5
-- **Session Management**: UUID
+- Go 1.21, net/http, html/template
+- Bootstrap 5, UUID
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
+### Using Docker Compose
 
 ```bash
-docker compose up
+make compose-up
 ```
 
 Access at: <http://localhost:8080>
@@ -39,49 +35,71 @@ go mod download
 go run .
 ```
 
-### Docker Only
-
-```bash
-docker build -t wordle-game .
-docker run -p 8080:8080 wordle-game
-```
-
 ## How to Play
 
 1. Visit <http://localhost:8080> to start a new game
 2. Enter a 5-letter word
-3. Submit and observe feedback:
-   - 🟩 **Green**: Correct position
-   - 🟨 **Yellow**: Wrong position
-   - ⬜ **Gray**: Not in word
-4. You have 6 attempts to guess the word
-5. Start a new game after winning/losing
+3. Observe feedback:
+   - 🟩 Green: Correct position
+   - 🟨 Yellow: Wrong position
+   - ⬜ Gray: Not in word
+4. Win in 6 attempts or less
+
+## Docker
+
+### Build
+
+```bash
+# Standard Alpine multi-stage image
+make build-go
+
+# Distroless image
+make build-distroless-go
+```
+
+### Pull from Docker Hub
+
+```bash
+make pull-go
+```
+
+### Run
+
+```bash
+# Standard image
+make run-go
+
+# Distroless image
+make run-distroless-go
+```
+
+### Compare Sizes
+
+```bash
+make compare-sizes
+```
+
+This shows both regular and distroless image sizes.
+
+### Image Comparison
+
+Image Type | Size | Build Type
+--- | --- | ---
+Full Go | ~300MB | Single-stage
+Alpine | ~15MB | Multi-stage
+Distroless | ~5MB | Multi-stage + minimal base
+
+See [DOCKER.md](./DOCKER.md) for best practices details.
 
 ## API Endpoints
 
-- **GET /** - Redirects to new game session
-- **GET /game/{game_id}** - Game page for specific session
-- **POST /guess** - Submit guess (params: `game_id`, `guess`)
-- **GET /health** - Health check endpoint
-
-```json
-{
-  "status": "healthy",
-  "service": "wordle-game"
-}
-```
-
-## Architecture
-
-- **Session Management**: UUID-based, in-memory storage
-- **Concurrency**: `sync.RWMutex` for thread-safe operations
-- **Game Logic**: Proper Wordle algorithm with letter frequency handling
-- **Word List**: 25 curated 5-letter words
+- **GET /** - Redirects to new game
+- **GET /game/{game_id}** - Game page
+- **POST /guess** - Submit guess
+- **GET /health** - Health check
 
 ## Testing
 
-1. Visit <http://localhost:8080>
-2. Play through a complete game
-3. Verify color-coded feedback works correctly
-4. Check health: `curl http://localhost:8080/health`
-5. Test concurrent sessions (multiple browser tabs)
+```bash
+make test
+```
