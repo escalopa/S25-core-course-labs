@@ -183,7 +183,7 @@ func GuessHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // HealthHandler serves health check endpoint
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
+func HealthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"healthy","service":"wordle-game"}`))
 }

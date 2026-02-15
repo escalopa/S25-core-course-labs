@@ -1,5 +1,8 @@
 # Wordle Game - Go Web Application
 
+![Go CI](https://github.com/escalopa/S25-core-course-labs/workflows/Go%20CI/badge.svg)
+[![codecov](https://codecov.io/gh/escalopa/S25-core-course-labs/branch/main/graph/badge.svg?flag=go)](https://codecov.io/gh/escalopa/S25-core-course-labs)
+
 ## Overview
 
 Interactive Wordle game with 6 attempts to guess a 5-letter word. Features Bootstrap UI with animations and thread-safe session management.
@@ -20,6 +23,14 @@ Interactive Wordle game with 6 attempts to guess a 5-letter word. Features Boots
 ## Quick Start
 
 ### Using Docker Compose
+
+**With production images from Docker Hub:**
+
+```bash
+make compose-prod-up
+```
+
+**Or build from source:**
 
 ```bash
 make compose-up
@@ -97,6 +108,16 @@ See [DOCKER.md](./DOCKER.md) for best practices details.
 - **GET /game/{game_id}** - Game page
 - **POST /guess** - Submit guess
 - **GET /health** - Health check
+
+## Unit Tests
+
+```bash
+make test-go
+```
+
+- 17+ unit tests with 85%+ coverage
+- Table-driven tests with race detector
+- See [GO.md](./GO.md) for details
 
 ## Testing
 

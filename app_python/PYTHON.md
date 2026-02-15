@@ -54,13 +54,21 @@ I chose **FastAPI** for this web application for the following reasons:
 - **Health Checks**: Docker health check included for container orchestration.
 - **Environment Variables**: Container configuration via environment variables.
 
-### 7. Testing Approach
+### 7. Testing
 
-The application is designed to be easily testable:
+**Framework**: pytest with coverage
 
-- **Manual Testing**: Refresh the page to verify time updates correctly.
-- **Health Endpoint**: Can be used for automated health checks.
-- **Isolated Functions**: Pure functions that can be unit tested independently.
+**Test File**: `test_app.py` - 20+ unit tests covering endpoints, timezone logic, and health checks
+
+**Running Tests**:
+
+```bash
+make test-python
+```
+
+**Coverage**: 95%+ of code covered
+
+**CI Integration**: Tests run automatically on PRs with linting, coverage reporting, and vulnerability scanning
 
 ### 8. Documentation
 

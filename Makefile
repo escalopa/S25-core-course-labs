@@ -87,7 +87,7 @@ run-distroless-go: ## Run Go distroless container
 	docker run -d -p 8080:8080 --name wordle-game-app-distroless $(GO_DISTROLESS_IMAGE):$(TAG)
 
 ## Docker Compose targets
-compose-up: ## Start applications using Docker Compose
+compose-up: ## Start applications using Docker Compose (builds from source)
 	@echo "Starting applications with Docker Compose..."
 	docker compose up -d
 
@@ -101,6 +101,18 @@ compose-build: ## Build and start applications using Docker Compose
 
 compose-logs: ## Show Docker Compose logs
 	docker compose logs -f
+
+compose-prod-up: ## Start applications using production images from Docker Hub
+	@echo "Starting applications with production images from Docker Hub..."
+	docker compose -f docker-compose.prod.yml up -d
+
+compose-prod-down: ## Stop applications using production compose
+	@echo "Stopping applications..."
+	docker compose -f docker-compose.prod.yml down
+
+compose-prod-pull: ## Pull latest production images from Docker Hub
+	@echo "Pulling latest images from Docker Hub..."
+	docker compose -f docker-compose.prod.yml pull
 
 ## Utility targets
 compare-sizes: ## Compare image sizes (regular vs distroless)
@@ -134,8 +146,36 @@ lint-dockerfile: ## Lint Dockerfiles using hadolint
 	@hadolint app_python/distroless.Dockerfile
 	@hadolint app_go/distroless.Dockerfile
 
-test: ## Test applications are running
+test-running: ## Test applications are running
 	@echo "Testing Python application..."
 	@curl -f http://localhost:5000/health || echo "Python app not responding"
 	@echo "\nTesting Go application..."
 	@curl -f http://localhost:8080/health || echo "Go app not responding"
+
+test-python: ## Run Python unit tests with coverage
+	@echo "Running Python tests with coverage..."
+	cd app_python && pytest --cov=app --cov-report=term --cov-report=term-missing
+	@echo ""
+	@echo "📊 Coverage Summary:"
+	cd app_python && coverage report --format=total
+
+test-go: ## Run Go unit tests with coverage
+	@echo "Running Go tests with coverage..."
+	cd app_go && go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+	@echo ""
+	@echo "📊 Coverage Summary:"
+	cd app_go && go tool cover -func=coverage.out | tail -1
+
+test-all: test-python test-go ## Run all unit tests
+
+lint-python: ## Lint Python code
+	@echo "Linting Python code..."
+	cd app_python && pylint app.py --rcfile=.pylintrc
+
+lint-go: ## Lint Go code
+	@echo "Linting Go code..."
+	cd app_go && revive -config .revive.toml -formatter friendly ./...
+
+lint-all: lint-python lint-go ## Run all linters
+
+ci-local: lint-all test-all ## Run CI checks locally
