@@ -7,9 +7,9 @@
 
 - name: Verify Docker Compose installation
   ansible.builtin.command: docker compose version
-  register: compose_version
+  register: docker_compose_version
   changed_when: false
 
 - name: Print Docker Compose version
   ansible.builtin.debug:
-    msg: "{{ compose_version.stdout }}"
+    msg: "{{ docker_compose_version.stdout }}"
