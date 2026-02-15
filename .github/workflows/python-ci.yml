@@ -45,7 +45,20 @@ jobs:
       - name: Run tests with pytest
         working-directory: ./app_python
         run: |
-          pytest --cov=app --cov-report=xml --cov-report=term
+          pytest --cov=app --cov-report=xml --cov-report=term --cov-report=term-missing
+
+      - name: Display coverage summary
+        working-directory: ./app_python
+        run: |
+          echo "## Python Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          coverage report --format=total >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Detailed Coverage" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          coverage report >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

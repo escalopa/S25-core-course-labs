@@ -152,13 +152,19 @@ test-running: ## Test applications are running
 	@echo "\nTesting Go application..."
 	@curl -f http://localhost:8080/health || echo "Go app not responding"
 
-test-python: ## Run Python unit tests
-	@echo "Running Python tests..."
-	cd app_python && pytest --cov=app --cov-report=term
+test-python: ## Run Python unit tests with coverage
+	@echo "Running Python tests with coverage..."
+	cd app_python && pytest --cov=app --cov-report=term --cov-report=term-missing
+	@echo ""
+	@echo "📊 Coverage Summary:"
+	cd app_python && coverage report --format=total
 
-test-go: ## Run Go unit tests
-	@echo "Running Go tests..."
-	cd app_go && go test -v -race -cover ./...
+test-go: ## Run Go unit tests with coverage
+	@echo "Running Go tests with coverage..."
+	cd app_go && go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+	@echo ""
+	@echo "📊 Coverage Summary:"
+	cd app_go && go tool cover -func=coverage.out | tail -1
 
 test-all: test-python test-go ## Run all unit tests
 

@@ -43,6 +43,19 @@ jobs:
         working-directory: ./app_go
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
+      - name: Display coverage summary
+        working-directory: ./app_go
+        run: |
+          echo "## Go Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          go tool cover -func=coverage.out | tail -1 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Detailed Coverage" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          go tool cover -func=coverage.out >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
       - name: Generate coverage report
         working-directory: ./app_go
         run: go tool cover -html=coverage.out -o coverage.html

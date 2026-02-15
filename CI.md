@@ -103,13 +103,19 @@ tags: |
 ### 6. Coverage Reporting
 
 ```yaml
+# Display coverage in workflow summary
+- name: Display coverage summary
+  run: |
+    echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+    coverage report >> $GITHUB_STEP_SUMMARY
+
+# Upload to Codecov for tracking
 - uses: codecov/codecov-action@v4
   with:
     file: ./coverage.xml
-    fail_ci_if_error: false
 ```
 
-**Impact**: Track coverage trends with PR comments
+**Impact**: Coverage visible in Actions summary, Codecov dashboard, and README badges
 
 ## Performance Results
 
@@ -170,8 +176,18 @@ Runs: linters, tests, coverage reports
 - **Build Duration**: Track average time per pipeline
 - **Success Rate**: % of successful builds
 - **Cache Hit Rate**: Effectiveness of caching
-- **Coverage Trends**: Test quality over time
+- **Coverage Trends**: Visible in workflow summary and Codecov
 - **Security Issues**: Vulnerability count
+
+### Coverage Visibility
+
+Coverage is displayed in multiple places:
+
+1. **GitHub Actions Summary**: Each workflow run shows coverage in the summary tab
+2. **Workflow Logs**: Detailed coverage report in test step output
+3. **Codecov Dashboard**: Historical trends and PR comments
+4. **README Badges**: Current coverage percentage visible at a glance
+5. **Local Testing**: `make test-python` and `make test-go` show coverage summary
 
 ## Best Practices
 
