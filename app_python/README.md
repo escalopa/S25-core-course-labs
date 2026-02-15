@@ -1,5 +1,8 @@
 # Moscow Time Display - Python Web Application
 
+![Python CI](https://github.com/escalopa/S25-core-course-labs/workflows/Python%20CI/badge.svg)
+[![codecov](https://codecov.io/gh/escalopa/S25-core-course-labs/branch/main/graph/badge.svg?flag=python)](https://codecov.io/gh/escalopa/S25-core-course-labs)
+
 ## Overview
 
 FastAPI web application displaying current Moscow (MSK) timezone with modern Bootstrap UI.
@@ -19,6 +22,14 @@ FastAPI web application displaying current Moscow (MSK) timezone with modern Boo
 ## Quick Start
 
 ### Using Docker Compose
+
+**With production images from Docker Hub:**
+
+```bash
+make compose-prod-up
+```
+
+**Or build from source:**
 
 ```bash
 make compose-up
@@ -85,6 +96,12 @@ See [DOCKER.md](./DOCKER.md) for best practices details.
 
 - **GET /** - Main page displaying Moscow time
 - **GET /health** - Health check
+
+## Unit Tests
+
+```bash
+make test-python
+```
 
 ## Testing
 

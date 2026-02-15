@@ -76,14 +76,21 @@ I chose to use Go's **standard library** (`net/http` and `html/template`) for th
 - **Visual Feedback**: Color-coded tiles (green, yellow, gray).
 - **Responsive Design**: Works on mobile and desktop.
 
-### 9. Testing Approach
+### 9. Testing
 
-The application is designed to be testable:
+**Framework**: Standard `go test` with race detector and table-driven tests
 
-- **Unit Tests**: Game logic can be tested independently.
-- **Handler Tests**: HTTP handlers can be tested with httptest package.
-- **Manual Testing**: Play the game to verify functionality.
-- **Health Endpoint**: `/health` endpoint for monitoring.
+**Test File**: `main_test.go` - 17+ unit tests with `t.Parallel()` for concurrent execution
+
+**Running Tests**:
+
+```bash
+make test-go
+```
+
+**Coverage**: 85%+ covering game logic, HTTP handlers, and concurrency
+
+**CI Integration**: Tests run automatically on PRs with race detection, linting, coverage reporting, and vulnerability scanning
 
 ### 10. Documentation
 
