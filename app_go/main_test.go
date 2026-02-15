@@ -24,7 +24,11 @@ func TestNewGame(t *testing.T) {
 		{"game word is not empty", func() bool { return game.Word != "" }, "Game word should not be empty"},
 		{"word length is 5", func() bool { return len(game.Word) == 5 }, "Word length should be 5"},
 		{"max attempts is 6", func() bool { return game.MaxAttempts == 6 }, "MaxAttempts should be 6"},
-		{"new game not won or lost", func() bool { return !game.IsWon && !game.IsLost }, "New game should not be won or lost"},
+		{
+			"new game not won or lost",
+			func() bool { return !game.IsWon && !game.IsLost },
+			"New game should not be won or lost",
+		},
 	}
 
 	for _, tt := range tests {
