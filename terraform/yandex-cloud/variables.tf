@@ -38,8 +38,14 @@ variable "network_id" {
   default     = "enpef4gkfef33crv2auj"
 }
 
+variable "vm_user" {
+  description = "Username to create on the VM for SSH access"
+  type        = string
+  default     = "ubuntu"
+}
+
 variable "ssh_public_key_path" {
   description = "Path to the SSH public key file"
   type        = string
-  default     = "~/.ssh/default.pub"
+  default     = "~/.ssh/devops-course.pub"
 }

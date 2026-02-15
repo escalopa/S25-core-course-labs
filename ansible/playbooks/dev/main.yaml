@@ -1,0 +1,7 @@
+---
+- name: Deploy Docker on Yandex Cloud VM
+  hosts: yandex_cloud
+  become: true
+
+  roles:
+    - docker
