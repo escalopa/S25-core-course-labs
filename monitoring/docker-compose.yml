@@ -1,0 +1,89 @@
+services:
+  # Loki - Log aggregation system
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki-data:/loki
+    networks:
+      - monitoring
+
+  # Promtail - Log collector
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
+      - /var/log:/var/log
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  # Grafana - Visualization and dashboards
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  # Python Application - Moscow Time Display
+  python-app:
+    image: escalopax/moscow-time-app:latest
+    container_name: moscow-time-app
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.Name}}"
+        labels: "app,service"
+    labels:
+      app: "moscow-time"
+      service: "python-app"
+    networks:
+      - monitoring
+
+  # Go Application - Wordle Game
+  go-app:
+    image: escalopax/wordle-game:latest
+    container_name: wordle-game-app
+    ports:
+      - "9090:8080"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.Name}}"
+        labels: "app,service"
+    labels:
+      app: "wordle-game"
+      service: "go-app"
+    networks:
+      - monitoring
+
+volumes:
+  loki-data:
+  grafana-data:
+
+networks:
+  monitoring:
+    driver: bridge

@@ -179,3 +179,38 @@ lint-go: ## Lint Go code
 lint-all: lint-python lint-go ## Run all linters
 
 ci-local: lint-all test-all ## Run CI checks locally
+
+## Local development setup
+setup-python: ## Setup Python virtual environment and install dependencies
+	@echo "Setting up Python virtual environment..."
+	cd app_python && python3 -m venv venv
+	cd app_python && . venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+	@echo "✓ Python environment ready!"
+	@echo "To activate: cd app_python && source venv/bin/activate"
+
+setup-go: ## Setup Go dependencies
+	@echo "Setting up Go dependencies..."
+	cd app_go && go mod download
+	@echo "✓ Go dependencies ready!"
+
+setup-all: setup-python setup-go ## Setup all development environments
+
+## Monitoring stack targets
+monitoring-up: ## Start the logging stack (Loki, Promtail, Grafana + apps)
+	@echo "Starting monitoring stack..."
+	cd monitoring && docker compose up -d
+
+monitoring-down: ## Stop the logging stack
+	@echo "Stopping monitoring stack..."
+	cd monitoring && docker compose down
+
+monitoring-logs: ## Show monitoring stack logs
+	cd monitoring && docker compose logs -f
+
+monitoring-restart: ## Restart the monitoring stack
+	@echo "Restarting monitoring stack..."
+	cd monitoring && docker compose restart
+
+monitoring-clean: ## Clean monitoring stack (removes volumes)
+	@echo "Cleaning monitoring stack..."
+	cd monitoring && docker compose down -v
