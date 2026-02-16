@@ -1,0 +1,7 @@
+---
+web_app_image: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}/moscow-time-app:latest"
+web_app_port: 5000
+web_app_internal_port: 5000
+web_app_container_name: moscow-time-app
+web_app_compose_dir: /opt/web_app
+web_app_full_wipe: false

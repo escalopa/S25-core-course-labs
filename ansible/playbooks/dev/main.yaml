@@ -1,7 +1,23 @@
 ---
-- name: Deploy Docker on Yandex Cloud VM
+- name: Deploy Docker and Web Applications on Yandex Cloud VM
   hosts: yandex_cloud
   become: true
 
   roles:
     - docker
+
+    - role: web_app
+      vars:
+        web_app_image: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}/moscow-time-app:latest"
+        web_app_container_name: moscow-time-app
+        web_app_port: 5000
+        web_app_internal_port: 5000
+        web_app_compose_dir: /opt/moscow-time-app
+
+    - role: web_app
+      vars:
+        web_app_image: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}/wordle-game:latest"
+        web_app_container_name: wordle-game
+        web_app_port: 8080
+        web_app_internal_port: 8080
+        web_app_compose_dir: /opt/wordle-game

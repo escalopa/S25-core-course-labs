@@ -1,0 +1,33 @@
+---
+- name: Run wipe tasks
+  ansible.builtin.include_tasks: 0-wipe.yml
+  tags:
+    - wipe
+
+- name: Deploy web application
+  tags:
+    - deploy
+  block:
+    - name: Create compose directory
+      ansible.builtin.file:
+        path: "{{ web_app_compose_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Deliver docker-compose file
+      ansible.builtin.template:
+        src: docker-compose.yml.j2
+        dest: "{{ web_app_compose_dir }}/docker-compose.yml"
+        mode: "0644"
+      notify: Restart web_app
+
+    - name: Pull Docker image
+      community.docker.docker_image:
+        name: "{{ web_app_image }}"
+        source: pull
+        force_source: true
+
+    - name: Start application with Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ web_app_compose_dir }}"
+        state: present
