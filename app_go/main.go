@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Game represents a Wordle game session
@@ -49,7 +51,63 @@ var (
 		"PLANT", "SMART", "BEACH", "CLOUD", "SPORT",
 		"STONE", "LIGHT", "NIGHT", "FIGHT", "TIGHT",
 	}
+
+	// Prometheus metrics
+	httpRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "endpoint", "status"},
+	)
+
+	httpRequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "HTTP request duration in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "endpoint"},
+	)
+
+	gamesCreatedTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "games_created_total",
+			Help: "Total number of games created",
+		},
+	)
+
+	guessesTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "guesses_total",
+			Help: "Total number of guesses made",
+		},
+	)
+
+	gamesWonTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "games_won_total",
+			Help: "Total number of games won",
+		},
+	)
+
+	gamesLostTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "games_lost_total",
+			Help: "Total number of games lost",
+		},
+	)
 )
+
+func init() {
+	// Register Prometheus metrics
+	prometheus.MustRegister(httpRequestsTotal)
+	prometheus.MustRegister(httpRequestDuration)
+	prometheus.MustRegister(gamesCreatedTotal)
+	prometheus.MustRegister(guessesTotal)
+	prometheus.MustRegister(gamesWonTotal)
+	prometheus.MustRegister(gamesLostTotal)
+}
 
 // NewGame creates a new Wordle game
 func (gs *GameStore) NewGame() *Game {
@@ -65,6 +123,7 @@ func (gs *GameStore) NewGame() *Game {
 		IsLost:      false,
 	}
 	gs.games[game.ID] = game
+	gamesCreatedTotal.Inc()
 	log.Printf("New game created - ID: %q, Word: %q", game.ID, game.Word)
 	return game
 }
@@ -128,36 +187,52 @@ func (g *Game) MakeGuess(guess string) {
 
 	attempt := g.CheckGuess(guess)
 	g.Attempts = append(g.Attempts, attempt)
+	guessesTotal.Inc()
 
 	// Check if won
 	if strings.ToUpper(guess) == g.Word {
 		g.IsWon = true
+		gamesWonTotal.Inc()
 	} else if len(g.Attempts) >= g.MaxAttempts {
 		g.IsLost = true
+		gamesLostTotal.Inc()
 	}
 }
 
 // IndexHandler serves the main game page
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(r.Method, "/"))
+	defer timer.ObserveDuration()
+
 	game := gameStore.NewGame()
+	httpRequestsTotal.WithLabelValues(r.Method, "/", "303").Inc()
 	http.Redirect(w, r, "/game/"+game.ID, http.StatusSeeOther)
 }
 
 // GameHandler serves the game interface
 func GameHandler(w http.ResponseWriter, r *http.Request) {
+	timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(r.Method, "/game/"))
+	defer timer.ObserveDuration()
+
 	gameID := strings.TrimPrefix(r.URL.Path, "/game/")
 	game, exists := gameStore.GetGame(gameID)
 	if !exists {
+		httpRequestsTotal.WithLabelValues(r.Method, "/game/", "303").Inc()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
+	httpRequestsTotal.WithLabelValues(r.Method, "/game/", "200").Inc()
 	templates.ExecuteTemplate(w, "game.html", game)
 }
 
 // GuessHandler processes a guess submission
 func GuessHandler(w http.ResponseWriter, r *http.Request) {
+	timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(r.Method, "/guess"))
+	defer timer.ObserveDuration()
+
 	if r.Method != http.MethodPost {
+		httpRequestsTotal.WithLabelValues(r.Method, "/guess", "405").Inc()
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -167,6 +242,7 @@ func GuessHandler(w http.ResponseWriter, r *http.Request) {
 
 	game, exists := gameStore.GetGame(gameID)
 	if !exists {
+		httpRequestsTotal.WithLabelValues(r.Method, "/guess", "303").Inc()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -174,16 +250,19 @@ func GuessHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate guess
 	guess = strings.TrimSpace(guess)
 	if len(guess) != 5 {
+		httpRequestsTotal.WithLabelValues(r.Method, "/guess", "303").Inc()
 		http.Redirect(w, r, "/game/"+gameID, http.StatusSeeOther)
 		return
 	}
 
 	game.MakeGuess(guess)
+	httpRequestsTotal.WithLabelValues(r.Method, "/guess", "303").Inc()
 	http.Redirect(w, r, "/game/"+gameID, http.StatusSeeOther)
 }
 
 // HealthHandler serves health check endpoint
-func HealthHandler(w http.ResponseWriter, _ *http.Request) {
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	httpRequestsTotal.WithLabelValues(r.Method, "/health", "200").Inc()
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"healthy","service":"wordle-game"}`))
 }
@@ -193,6 +272,7 @@ func main() {
 	http.HandleFunc("/game/", GameHandler)
 	http.HandleFunc("/guess", GuessHandler)
 	http.HandleFunc("/health", HealthHandler)
+	http.Handle("/metrics", promhttp.Handler())
 
 	port := ":8080"
 	log.Printf("Starting Wordle game server on %s", port)

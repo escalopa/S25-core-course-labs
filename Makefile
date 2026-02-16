@@ -196,11 +196,11 @@ setup-go: ## Setup Go dependencies
 setup-all: setup-python setup-go ## Setup all development environments
 
 ## Monitoring stack targets
-monitoring-up: ## Start the logging stack (Loki, Promtail, Grafana + apps)
+monitoring-up: ## Start the monitoring stack (Prometheus, Loki, Promtail, Grafana + apps)
 	@echo "Starting monitoring stack..."
 	cd monitoring && docker compose up -d
 
-monitoring-down: ## Stop the logging stack
+monitoring-down: ## Stop the monitoring stack
 	@echo "Stopping monitoring stack..."
 	cd monitoring && docker compose down
 
