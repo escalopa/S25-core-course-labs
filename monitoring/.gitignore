@@ -1,0 +1,12 @@
+# Grafana data
+grafana-data/
+
+# Loki data
+loki-data/
+
+# Temporary files
+/tmp/
+*.log
+
+# OS
+.DS_Store
