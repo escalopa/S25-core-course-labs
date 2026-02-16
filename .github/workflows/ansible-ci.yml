@@ -54,4 +54,5 @@ jobs:
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USER: ${{ secrets.VM_USER }}
           SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: ansible-playbook playbooks/dev/main.yaml --diff
