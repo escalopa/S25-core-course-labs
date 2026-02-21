@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordle-game-app
+  labels:
+    app: wordle-game-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: wordle-game-app
+  template:
+    metadata:
+      labels:
+        app: wordle-game-app
+    spec:
+      containers:
+      - name: wordle-game-app
+        image: escalopax/wordle-game:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5

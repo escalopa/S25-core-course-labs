@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lab-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: moscow-time.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: moscow-time-app
+            port:
+              number: 80
+  - host: wordle-game.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wordle-game-app
+            port:
+              number: 80
+  - host: localhost
+    http:
+      paths:
+      - path: /moscow
+        pathType: Prefix
+        backend:
+          service:
+            name: moscow-time-app
+            port:
+              number: 80
+      - path: /wordle
+        pathType: Prefix
+        backend:
+          service:
+            name: wordle-game-app
+            port:
+              number: 80
