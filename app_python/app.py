@@ -25,8 +25,6 @@ templates = Jinja2Templates(directory="templates")
 
 # Visit tracking
 VISITS_FILE = "/data/visits"
-visit_count = 0
-visit_lock = threading.Lock()
 
 
 def load_visits() -> int:
@@ -56,11 +54,14 @@ def save_visits(count: int) -> None:
 
 def increment_visits() -> int:
     """Increment and persist the visit counter in a thread-safe way."""
-    global visit_count
-    with visit_lock:
-        visit_count += 1
-        save_visits(visit_count)
-        return visit_count
+    # Use application state to avoid module-level globals (pylint-friendly)
+    if not hasattr(app.state, "visit_lock"):
+        app.state.visit_lock = threading.Lock()
+    with app.state.visit_lock:
+        current = getattr(app.state, "visit_count", 0) + 1
+        app.state.visit_count = current
+        save_visits(current)
+        return current
 
 
 # Prometheus metrics
@@ -116,7 +117,7 @@ async def health_check() -> dict[str, str]:
 async def get_visits() -> dict[str, int]:
     """Get the number of visits to the main page."""
     REQUEST_COUNT.labels(method="GET", endpoint="/visits", status="200").inc()
-    return {"visits": visit_count}
+    return {"visits": getattr(app.state, "visit_count", 0)}
 
 
 @app.get("/metrics")
@@ -153,5 +154,8 @@ async def metrics_middleware(
         REQUEST_DURATION.labels(method=method, endpoint=endpoint).observe(duration)
 
 
-# Load initial visit count on startup
-visit_count = load_visits()
+@app.on_event("startup")
+def _startup_load_visits() -> None:
+    """Load persisted visit count into app state at startup."""
+    app.state.visit_count = load_visits()
+    app.state.visit_lock = threading.Lock()
