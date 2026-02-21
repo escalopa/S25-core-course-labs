@@ -1,0 +1,17 @@
+# yamllint disable
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "wordle-game.fullname" . }}-pre-install-hook
+  labels:
+    {{- include "wordle-game.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  containers:
+    - name: pre-install
+      image: busybox
+      command: ['sh', '-c', 'echo "Running pre-install hook" && sleep 20 && echo "Pre-install hook completed"']
+  restartPolicy: Never
