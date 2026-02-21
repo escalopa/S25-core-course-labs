@@ -1,0 +1,16 @@
+# yamllint disable
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wordle-game.fullname" . }}
+  labels:
+    {{- include "wordle-game.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.containerPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "wordle-game.selectorLabels" . | nindent 4 }}

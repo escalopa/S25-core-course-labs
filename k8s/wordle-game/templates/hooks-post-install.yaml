@@ -1,0 +1,17 @@
+# yamllint disable
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "wordle-game.fullname" . }}-post-install-hook
+  labels:
+    {{- include "wordle-game.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  containers:
+    - name: post-install
+      image: busybox
+      command: ['sh', '-c', 'echo "Running post-install hook" && sleep 20 && echo "Post-install hook completed"']
+  restartPolicy: Never

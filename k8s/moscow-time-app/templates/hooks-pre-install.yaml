@@ -1,0 +1,17 @@
+# yamllint disable
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "moscow-time-app.fullname" . }}-pre-install-hook
+  labels:
+    {{- include "moscow-time-app.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  containers:
+    - name: pre-install
+      image: busybox
+      command: ['sh', '-c', 'echo "Running pre-install hook" && sleep 20 && echo "Pre-install hook completed"']
+  restartPolicy: Never
