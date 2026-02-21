@@ -41,7 +41,6 @@ kubectl apply -f service-go.yml
 
 ```bash
 minikube addons enable dashboard
-# Dashboard will be accessible via minikube dashboard command
 ```
 
 4. For Ingress (bonus), enable the ingress addon:
@@ -62,6 +61,7 @@ minikube dashboard
 ```
 
 This will automatically open your default browser to the Kubernetes Dashboard where you can visualize:
+
 - Pods and their status
 - Deployments and replicas
 - Services and endpoints
@@ -69,24 +69,16 @@ This will automatically open your default browser to the Kubernetes Dashboard wh
 - Logs from containers
 
 **Dashboard Features:**
+
 - Real-time cluster monitoring
 - Pod logs and resource metrics
 - Service endpoints and port forwarding
 - Namespace management
 
-**Screenshot:**
-[Add screenshot showing dashboard with pods and services]
-
 ### Check Pods and Services
 
 ```bash
 kubectl get pods,svc
-```
-
-**Output:**
-
-```txt
-[Add output from kubectl get pods,svc here]
 ```
 
 ### Access Applications
@@ -97,41 +89,43 @@ Get the Minikube IP and service endpoints:
 minikube service --all
 ```
 
-**Output:**
+### Test Connectivity
 
-```txt
-[Add output from minikube service --all here]
+**Recommended: Use `minikube service` to access applications**
+
+Open services in browser automatically:
+
+```bash
+minikube service moscow-time-app
+minikube service wordle-game-app
 ```
 
-### Test Connectivity
+Or view all services and URLs:
+
+```bash
+minikube service --all
+```
+
+This will automatically handle tunneling and port-forwarding for you.
 
 #### Python App (Moscow Time)
 
-Via NodePort:
-
 ```bash
-curl http://$(minikube ip):30001/health
-curl http://$(minikube ip):30001/metrics
-```
+# Opens browser to Python app
+minikube service moscow-time-app
 
-**Output:**
-```
-[Add curl output here]
+# Or via the service URL (from minikube service --all)
+curl http://127.0.0.1:<port>/health
 ```
 
 #### Go App (Wordle Game)
 
-Via NodePort:
-
 ```bash
-curl http://$(minikube ip):30002/health
-curl http://$(minikube ip):30002/metrics
-```
+# Opens browser to Go app
+minikube service wordle-game-app
 
-**Output:**
-
-```
-[Add curl output here]
+# Or via the service URL (from minikube service --all)
+curl http://127.0.0.1:<port>/health
 ```
 
 ### Ingress Testing (Bonus)
@@ -148,13 +142,14 @@ minikube ip
 ```
 
 Test via Ingress:
+
 ```bash
 curl http://moscow-time.local/
 curl http://wordle-game.local/
 ```
 
-**Screenshot:**
-[Add screenshot showing browser access]
+**Browser Screenshot:**
+[Add screenshot showing browser access via Ingress]
 
 ## Cleanup
 
@@ -227,7 +222,7 @@ Port-forward to test services locally:
 # Python app
 kubectl port-forward svc/moscow-time-app 8000:80
 
-# Go app  
+# Go app
 kubectl port-forward svc/wordle-game-app 8001:80
 ```
 
