@@ -13,6 +13,8 @@ FastAPI web application displaying current Moscow (MSK) timezone with modern Boo
 - Responsive Bootstrap 5 UI
 - Health check endpoint
 - Docker containerization with non-root user
+- Visit counter with persistence to file
+- `/visits` endpoint to track application usage
 
 ## Technology Stack
 
@@ -94,8 +96,28 @@ See [DOCKER.md](./DOCKER.md) for best practices details.
 
 ## API Endpoints
 
-- **GET /** - Main page displaying Moscow time
-- **GET /health** - Health check
+- **GET /** - Main page displaying Moscow time (increments visit counter)
+- **GET /health** - Health check endpoint
+- **GET /visits** - Returns visit count in JSON format
+
+## Persistence
+
+The application tracks visits to the main page and persists the count to a file:
+
+- **Visits File**: `/data/visits` (mounted as volume in Docker)
+- **Host Path**: `./app_python/data/visits` (local development)
+
+The visit counter persists across container restarts.
+
+### Example
+
+```bash
+# Check visits using Docker
+docker-compose exec python-app cat /data/visits
+
+# Check on host machine (after running with volumes)
+cat app_python/data/visits
+```
 
 ## Unit Tests
 

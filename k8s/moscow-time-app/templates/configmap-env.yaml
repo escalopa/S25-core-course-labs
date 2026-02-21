@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "moscow-time-app.fullname" . }}-env
+  labels:
+    {{- include "moscow-time-app.labels" . | nindent 4 }}
+data:
+  APP_CONFIG_ENV: "production"
+  LOG_LEVEL: "info"
+  FEATURE_FLAG_CACHE: "true"
+  FEATURE_FLAG_PERSISTENCE: "true"
+  FEATURE_FLAG_METRICS: "true"
+  DB_CONNECTION_POOL_SIZE: "10"
+  API_TIMEOUT: "30"
+  SERVICE_PORT: "5000"

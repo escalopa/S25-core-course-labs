@@ -14,6 +14,8 @@ Interactive Wordle game with 6 attempts to guess a 5-letter word. Features Boots
 - Color-coded feedback (green, yellow, gray)
 - Thread-safe concurrent access
 - Health check endpoint
+- Visit counter with persistence to file
+- `/visits` endpoint to track application usage
 
 ## Technology Stack
 
@@ -104,10 +106,30 @@ See [DOCKER.md](./DOCKER.md) for best practices details.
 
 ## API Endpoints
 
-- **GET /** - Redirects to new game
+- **GET /** - Redirects to new game (increments visit counter)
 - **GET /game/{game_id}** - Game page
 - **POST /guess** - Submit guess
 - **GET /health** - Health check
+- **GET /visits** - Returns visit count in JSON format
+
+## Persistence
+
+The application tracks visits to the main page and persists the count to a file:
+
+- **Visits File**: `/data/visits` (mounted as volume in Docker)
+- **Host Path**: `./app_go/data/visits` (local development)
+
+The visit counter persists across container restarts.
+
+### Example
+
+```bash
+# Check visits using Docker
+docker-compose exec go-app cat /data/visits
+
+# Check on host machine (after running with volumes)
+cat app_go/data/visits
+```
 
 ## Unit Tests
 
