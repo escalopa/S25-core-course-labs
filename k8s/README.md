@@ -91,8 +91,6 @@ minikube service --all
 
 ### Test Connectivity
 
-**Recommended: Use `minikube service` to access applications**
-
 Open services in browser automatically:
 
 ```bash
@@ -108,49 +106,6 @@ minikube service --all
 
 This will automatically handle tunneling and port-forwarding for you.
 
-#### Python App (Moscow Time)
-
-```bash
-# Opens browser to Python app
-minikube service moscow-time-app
-
-# Or via the service URL (from minikube service --all)
-curl http://127.0.0.1:<port>/health
-```
-
-#### Go App (Wordle Game)
-
-```bash
-# Opens browser to Go app
-minikube service wordle-game-app
-
-# Or via the service URL (from minikube service --all)
-curl http://127.0.0.1:<port>/health
-```
-
-### Ingress Testing (Bonus)
-
-Add hosts to /etc/hosts (or equivalent):
-
-```bash
-# Get Minikube IP
-minikube ip
-
-# Add to /etc/hosts:
-# <minikube-ip> moscow-time.local
-# <minikube-ip> wordle-game.local
-```
-
-Test via Ingress:
-
-```bash
-curl http://moscow-time.local/
-curl http://wordle-game.local/
-```
-
-**Browser Screenshot:**
-[Add screenshot showing browser access via Ingress]
-
 ## Cleanup
 
 Remove all Kubernetes resources:
@@ -164,6 +119,7 @@ kubectl delete -f ingress.yml
 ```
 
 Or delete the entire namespace:
+
 ```bash
 kubectl delete namespace default  # Be careful with this!
 ```
@@ -184,40 +140,17 @@ kubectl delete namespace default  # Be careful with this!
 - For production, use ClusterIP with a proper Ingress controller
 - Resource limits prevent apps from consuming excessive cluster resources
 
-## Dashboard Access Troubleshooting
-
-### If `minikube dashboard` doesn't open a browser:
-
-```bash
-# Manually get dashboard URL
-minikube dashboard --url
-
-# Then open in your browser:
-# http://<url-from-above>
-```
-
-### Dashboard Access Token (if needed):
-
-```bash
-kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret -o name | grep proxy-token)
-```
-
-### Alternative Dashboard Access (manual port-forward):
-
-```bash
-kubectl proxy
-# Then access: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-```
-
 ## Advanced kubectl Commands
 
 Monitor pod logs:
+
 ```bash
 kubectl logs -f deployment/moscow-time-app
 kubectl logs -f deployment/wordle-game-app
 ```
 
 Port-forward to test services locally:
+
 ```bash
 # Python app
 kubectl port-forward svc/moscow-time-app 8000:80
@@ -227,12 +160,14 @@ kubectl port-forward svc/wordle-game-app 8001:80
 ```
 
 Scale deployments:
+
 ```bash
 kubectl scale deployment moscow-time-app --replicas=5
 kubectl scale deployment wordle-game-app --replicas=5
 ```
 
 Describe resources for troubleshooting:
+
 ```bash
 kubectl describe pod <pod-name>
 kubectl describe deployment moscow-time-app
