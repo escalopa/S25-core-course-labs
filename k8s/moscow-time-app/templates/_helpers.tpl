@@ -60,3 +60,24 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Environment variables from secrets
+*/}}
+{{- define "moscow-time-app.secretEnv" -}}
+- name: MY_USER
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "moscow-time-app.fullname" . }}-secret
+      key: MY_USER
+- name: MY_PASS
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "moscow-time-app.fullname" . }}-secret
+      key: MY_PASS
+- name: APP_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "moscow-time-app.fullname" . }}-secret
+      key: APP_SECRET
+{{- end }}
