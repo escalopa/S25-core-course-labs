@@ -1,0 +1,53 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'docker-monitoring'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Loki metrics
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+        labels:
+          service: 'loki'
+
+  # Promtail metrics
+  - job_name: 'promtail'
+    static_configs:
+      - targets: ['promtail:9080']
+        labels:
+          service: 'promtail'
+
+  # Grafana metrics
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: 'grafana'
+
+  # Python application metrics
+  - job_name: 'python-app'
+    static_configs:
+      - targets: ['python-app:5000']
+        labels:
+          service: 'python-app'
+          app: 'moscow-time'
+    metrics_path: '/metrics'
+
+  # Go application metrics
+  - job_name: 'go-app'
+    static_configs:
+      - targets: ['go-app:8080']
+        labels:
+          service: 'go-app'
+          app: 'wordle-game'
+    metrics_path: '/metrics'

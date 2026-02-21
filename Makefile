@@ -1,7 +1,8 @@
 .PHONY: help build build-python build-go build-distroless build-distroless-python build-distroless-go \
         push push-python push-go pull pull-python pull-go \
         run-python run-go run-distroless-python run-distroless-go \
-        compose-up compose-down compose-build compare-sizes clean
+        compose-up compose-down compose-build compare-sizes clean \
+        load-test-python load-test-go load-test-all
 
 # Docker Hub username
 DOCKER_USER = escalopax
@@ -196,11 +197,11 @@ setup-go: ## Setup Go dependencies
 setup-all: setup-python setup-go ## Setup all development environments
 
 ## Monitoring stack targets
-monitoring-up: ## Start the logging stack (Loki, Promtail, Grafana + apps)
+monitoring-up: ## Start the monitoring stack (Prometheus, Loki, Promtail, Grafana + apps)
 	@echo "Starting monitoring stack..."
 	cd monitoring && docker compose up -d
 
-monitoring-down: ## Stop the logging stack
+monitoring-down: ## Stop the monitoring stack
 	@echo "Stopping monitoring stack..."
 	cd monitoring && docker compose down
 
@@ -214,3 +215,30 @@ monitoring-restart: ## Restart the monitoring stack
 monitoring-clean: ## Clean monitoring stack (removes volumes)
 	@echo "Cleaning monitoring stack..."
 	cd monitoring && docker compose down -v
+
+## Load Testing targets
+load-test-python: ## Run load test against Python app (30s, 50 clients)
+	@echo "Running load test against Python app (30s, 50 clients)..."
+	.venv/bin/python scripts/load_test.py --url http://localhost:8000 --mode python --clients 50 --duration 30
+
+load-test-python-light: ## Run light load test against Python app (10s, 10 clients)
+	@echo "Running light load test against Python app (10s, 10 clients)..."
+	.venv/bin/python scripts/load_test.py --url http://localhost:8000 --mode python --clients 10 --duration 10
+
+load-test-python-heavy: ## Run heavy load test against Python app (60s, 100 clients)
+	@echo "Running heavy load test against Python app (60s, 100 clients)..."
+	.venv/bin/python scripts/load_test.py --url http://localhost:8000 --mode python --clients 100 --duration 60
+
+load-test-go: ## Run load test against Go app (60s, 100 clients, simulates gameplay)
+	@echo "Running load test against Go app (60s, 100 clients, simulates gameplay)..."
+	.venv/bin/python scripts/load_test.py --url http://localhost:8080 --mode go --clients 100 --duration 60
+
+load-test-go-light: ## Run light load test against Go app (10s, 10 clients)
+	@echo "Running light load test against Go app (10s, 10 clients)..."
+	.venv/bin/python scripts/load_test.py --url http://localhost:8080 --mode go --clients 10 --duration 10
+
+load-test-go-heavy: ## Run heavy load test against Go app (120s, 200 clients)
+	@echo "Running heavy load test against Go app (120s, 200 clients)..."
+	.venv/bin/python scripts/load_test.py --url http://localhost:8080 --mode go --clients 200 --duration 120
+
+load-test-all: load-test-python load-test-go ## Run load tests for both applications sequentially
