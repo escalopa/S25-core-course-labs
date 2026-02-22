@@ -1,0 +1,22 @@
+# Dev environment values for moscow-time-app
+replicaCount: 1
+
+image:
+  repository: escalopax/moscow-time-app
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 5000
+
+containerPort: 5000
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
