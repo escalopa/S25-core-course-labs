@@ -1,8 +1,15 @@
-"""
-FastAPI application that displays the current time in Moscow timezone.
+"""FastAPI application that displays the current time in Moscow timezone.
+
+This module provides:
+- `/` : HTML page showing current Moscow time (increments visit counter)
+- `/visits` : JSON endpoint returning total visits
+- `/health` : basic healthcheck
+- `/metrics` : Prometheus metrics
 """
 
+import os
 import time
+import threading
 from collections.abc import Callable, Coroutine
 from datetime import datetime
 from typing import Any
@@ -15,6 +22,47 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 
 app = FastAPI(title="Moscow Time Display", version="1.0.0")
 templates = Jinja2Templates(directory="templates")
+
+# Visit tracking
+VISITS_FILE = "/data/visits"
+
+
+def load_visits() -> int:
+    """Load visit count from file.
+
+    Returns 0 if file is missing or malformed.
+    """
+    try:
+        if os.path.exists(VISITS_FILE):
+            with open(VISITS_FILE, "r", encoding="utf-8") as f:
+                return int(f.read().strip() or "0")
+    except (FileNotFoundError, ValueError):
+        pass
+    return 0
+
+
+def save_visits(count: int) -> None:
+    """Save visit count to file."""
+    try:
+        os.makedirs(os.path.dirname(VISITS_FILE), exist_ok=True)
+        with open(VISITS_FILE, "w", encoding="utf-8") as f:
+            f.write(str(count))
+    except IOError as e:
+        # Do not crash the application for IO errors; log to stdout
+        print(f"Error saving visits: {e}")
+
+
+def increment_visits() -> int:
+    """Increment and persist the visit counter in a thread-safe way."""
+    # Use application state to avoid module-level globals (pylint-friendly)
+    if not hasattr(app.state, "visit_lock"):
+        app.state.visit_lock = threading.Lock()
+    with app.state.visit_lock:
+        current = getattr(app.state, "visit_count", 0) + 1
+        app.state.visit_count = current
+        save_visits(current)
+        return current
+
 
 # Prometheus metrics
 REQUEST_COUNT = Counter(
@@ -38,14 +86,10 @@ ERROR_COUNT = Counter(
 
 @app.get("/", response_class=HTMLResponse)
 async def get_moscow_time(request: Request) -> Response:
-    """Display the current time in Moscow timezone.
+    """Render the main page and increment the visit counter."""
+    # Increment visit counter (synchronous, quick I/O)
+    increment_visits()
 
-    Args:
-        request: FastAPI request object
-
-    Returns:
-        HTMLResponse: Rendered HTML page with Moscow time
-    """
     moscow_tz = ZoneInfo("Europe/Moscow")
     current_time = datetime.now(moscow_tz)
 
@@ -64,22 +108,21 @@ async def get_moscow_time(request: Request) -> Response:
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
-    """Health check endpoint for monitoring.
-
-    Returns:
-        dict: Status of the application
-    """
+    """Health check endpoint for monitoring."""
     REQUEST_COUNT.labels(method="GET", endpoint="/health", status="200").inc()
     return {"status": "healthy", "service": "moscow-time-app"}
 
 
+@app.get("/visits")
+async def get_visits() -> dict[str, int]:
+    """Get the number of visits to the main page."""
+    REQUEST_COUNT.labels(method="GET", endpoint="/visits", status="200").inc()
+    return {"visits": getattr(app.state, "visit_count", 0)}
+
+
 @app.get("/metrics")
 async def metrics() -> Response:
-    """Prometheus metrics endpoint returning the correct content type.
-
-    Returns:
-        Response: Prometheus metrics in text format
-    """
+    """Prometheus metrics endpoint returning the correct content type."""
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
@@ -89,15 +132,7 @@ async def metrics_middleware(
     request: Request,
     call_next: Callable[[Request], Coroutine[Any, Any, Response]],
 ) -> Response:
-    """Middleware to record request count, duration and errors for all endpoints.
-
-    Args:
-        request: FastAPI request object
-        call_next: Next middleware function
-
-    Returns:
-        Response: The response from the next middleware
-    """
+    """Middleware to record request count, duration and errors for all endpoints."""
     method = request.method
     endpoint = request.url.path
     start_time = time.time()
@@ -117,3 +152,10 @@ async def metrics_middleware(
         # Record request duration
         duration = time.time() - start_time
         REQUEST_DURATION.labels(method=method, endpoint=endpoint).observe(duration)
+
+
+@app.on_event("startup")
+def _startup_load_visits() -> None:
+    """Load persisted visit count into app state at startup."""
+    app.state.visit_count = load_visits()
+    app.state.visit_lock = threading.Lock()

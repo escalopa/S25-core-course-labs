@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -42,9 +46,12 @@ type GameStore struct {
 }
 
 var (
-	gameStore = &GameStore{games: make(map[string]*Game)}
-	templates *template.Template
-	wordList  = []string{
+	gameStore        = &GameStore{games: make(map[string]*Game)}
+	templates        *template.Template
+	visitCount       int64
+	visitMutex       sync.Mutex
+	visitsFilePath   = "/data/visits"
+	wordList         = []string{
 		"AUDIO", "ADIEU", "ARISE", "RAISE", "SLATE",
 		"HOUSE", "MOUSE", "CRANE", "POUND", "CRATE",
 		"TRAIN", "BRAIN", "LEMON", "PEACH", "BREAD",
@@ -107,6 +114,60 @@ func init() {
 	prometheus.MustRegister(guessesTotal)
 	prometheus.MustRegister(gamesWonTotal)
 	prometheus.MustRegister(gamesLostTotal)
+
+	// Load visit count from file
+	loadVisitCount()
+}
+
+// loadVisitCount loads the visit count from the visits file
+func loadVisitCount() {
+	data, err := os.ReadFile(visitsFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			visitCount = 0
+			saveVisitCount()
+		} else {
+			log.Printf("Error reading visits file: %v", err)
+			visitCount = 0
+		}
+		return
+	}
+
+	count, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
+	if err != nil {
+		log.Printf("Error parsing visit count: %v", err)
+		visitCount = 0
+	} else {
+		visitCount = count
+	}
+}
+
+// saveVisitCount saves the visit count to the visits file
+func saveVisitCount() {
+	// Create directory if it doesn't exist
+	dir := filepath.Dir(visitsFilePath)
+	os.MkdirAll(dir, 0755)
+
+	// Write visit count to file
+	err := os.WriteFile(visitsFilePath, []byte(strconv.FormatInt(visitCount, 10)), 0644)
+	if err != nil {
+		log.Printf("Error saving visits file: %v", err)
+	}
+}
+
+// incrementVisits increments the visit counter
+func incrementVisits() {
+	visitMutex.Lock()
+	defer visitMutex.Unlock()
+	visitCount++
+	saveVisitCount()
+}
+
+// getVisits returns the current visit count
+func getVisits() int64 {
+	visitMutex.Lock()
+	defer visitMutex.Unlock()
+	return visitCount
 }
 
 // NewGame creates a new Wordle game
@@ -204,6 +265,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(r.Method, "/"))
 	defer timer.ObserveDuration()
 
+	incrementVisits()
 	game := gameStore.NewGame()
 	httpRequestsTotal.WithLabelValues(r.Method, "/", "303").Inc()
 	http.Redirect(w, r, "/game/"+game.ID, http.StatusSeeOther)
@@ -265,6 +327,17 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	httpRequestsTotal.WithLabelValues(r.Method, "/health", "200").Inc()
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"healthy","service":"wordle-game"}`))
+}
+
+// VisitsHandler returns the visit count
+func VisitsHandler(w http.ResponseWriter, r *http.Request) {
+	timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(r.Method, "/visits"))
+	defer timer.ObserveDuration()
+
+	httpRequestsTotal.WithLabelValues(r.Method, "/visits", "200").Inc()
+	w.Header().Set("Content-Type", "application/json")
+	visits := getVisits()
+	w.Write([]byte(fmt.Sprintf(`{"visits":%d}`, visits)))
 }
 
 func main() {
