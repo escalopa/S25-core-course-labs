@@ -12,15 +12,28 @@ import time
 import threading
 from collections.abc import Callable, Coroutine
 from datetime import datetime
-from typing import Any
+from typing import Any, AsyncGenerator
 from zoneinfo import ZoneInfo
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
-app = FastAPI(title="Moscow Time Display", version="1.0.0")
+@asynccontextmanager
+async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
+    """Lifespan handler to initialize app state on startup and clean up on shutdown."""
+    application.state.visit_count = load_visits()
+    application.state.visit_lock = threading.Lock()
+    try:
+        yield
+    finally:
+        # Optionally persist or clean up resources here
+        pass
+
+
+app = FastAPI(title="Moscow Time Display", version="1.0.0", lifespan=lifespan)
 templates = Jinja2Templates(directory="templates")
 
 # Visit tracking
@@ -152,10 +165,3 @@ async def metrics_middleware(
         # Record request duration
         duration = time.time() - start_time
         REQUEST_DURATION.labels(method=method, endpoint=endpoint).observe(duration)
-
-
-@app.on_event("startup")
-def _startup_load_visits() -> None:
-    """Load persisted visit count into app state at startup."""
-    app.state.visit_count = load_visits()
-    app.state.visit_lock = threading.Lock()
