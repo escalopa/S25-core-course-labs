@@ -22,10 +22,10 @@ from fastapi.templating import Jinja2Templates
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan handler to initialize app state on startup and clean up on shutdown."""
-    app.state.visit_count = load_visits()
-    app.state.visit_lock = threading.Lock()
+    application.state.visit_count = load_visits()
+    application.state.visit_lock = threading.Lock()
     try:
         yield
     finally:
