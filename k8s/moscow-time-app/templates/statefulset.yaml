@@ -37,6 +37,37 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+        {{- if .Values.initContainers.enabled }}
+        - name: init-downloader
+          image: busybox:1.36
+          command:
+            - wget
+            - "-O"
+            - /init-work/test.html
+            - {{ .Values.initContainers.downloadURL | quote }}
+          volumeMounts:
+            - name: init-work
+              mountPath: /init-work
+        - name: init-line-1
+          image: busybox:1.36
+          command: ["sh", "-c", "echo 'Init container 1 ran at '$(date) >> /init-work/init.log"]
+          volumeMounts:
+            - name: init-work
+              mountPath: /init-work
+        - name: init-line-2
+          image: busybox:1.36
+          command: ["sh", "-c", "echo 'Init container 2 ran at '$(date) >> /init-work/init.log"]
+          volumeMounts:
+            - name: init-work
+              mountPath: /init-work
+        - name: init-line-3
+          image: busybox:1.36
+          command: ["sh", "-c", "echo 'Init container 3 ran at '$(date) >> /init-work/init.log"]
+          volumeMounts:
+            - name: init-work
+              mountPath: /init-work
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}
@@ -95,6 +126,11 @@ spec:
               readOnly: true
             - name: data
               mountPath: /data
+            {{- if .Values.initContainers.enabled }}
+            - name: init-work
+              mountPath: /init-work
+              readOnly: true
+            {{- end }}
             {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -106,6 +142,10 @@ spec:
               - key: config.json
                 path: config.json
                 mode: 0644
+        {{- if .Values.initContainers.enabled }}
+        - name: init-work
+          emptyDir: {}
+        {{- end }}
         {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

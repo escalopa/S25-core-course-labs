@@ -18,6 +18,12 @@ updateStrategy:
 persistence:
   size: 100Mi
 
+# Init containers configuration
+initContainers:
+  enabled: true
+  # URL to download during pod initialization (wget)
+  downloadURL: "http://info.cern.ch"
+
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
   repository: escalopax/moscow-time-app
